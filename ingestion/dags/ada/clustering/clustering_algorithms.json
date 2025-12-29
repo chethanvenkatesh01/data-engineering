@@ -1,0 +1,87 @@
+{
+  "kmeans": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.KMeans",
+    "parameters": "{'n_init': list(range(8,15)),'max_iter': list(range(100,400,20)), 'n_clusters': list(range(3,11))}",
+    "k_as_input": true
+  },
+  "affinitypropagation": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.AffinityPropagation",
+    "parameters": "{'damping': list(np.around(np.arange(0.5,1.0,0.01),2)),'preference': [-50],'random_state': [42]}",
+    "k_as_input": false
+  },
+  "spectralclustering": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.SpectralClustering",
+    "parameters": "{'affinity': ['rbf'],'n_clusters':list(range(3,11))}",
+    "k_as_input": true
+  },
+  "agglomerativeclustering": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.AgglomerativeClustering",
+    "parameters": "{'n_clusters':list(range(3,11))}",
+    "k_as_input": true
+  },
+  "dbscan": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.DBSCAN",
+    "parameters": "{'eps':list(np.around(np.arange(0.01,1.0,0.01),2)),'min_samples':list(range(3,10))}",
+    "k_as_input": false
+  },
+  "birch": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.Birch",
+    "parameters": "{'threshold': list(np.around(np.arange(0.5,1.0,0.01),2)),'branching_factor': list(range(50,101)),'n_clusters':list(range(3,11))}",
+    "k_as_input": false
+  },
+  "minibatchkmeans": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.MiniBatchKMeans",
+    "parameters": "{'batch_size':list(range(10,100,1)),'n_clusters':list(range(3,11)) ,'random_state': [123]}",
+    "k_as_input": true
+  },
+  "optics": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.OPTICS",
+    "parameters": "{'xi': list(np.around(np.arange(0,1,0.01),2)),'min_samples': list(range(3,11)),'cluster_method': ('xi','dbscan')}",
+    "k_as_input": false
+  },
+  "kmedoids": {
+    "default_method": true,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn_extra.cluster.KMedoids",
+    "parameters": "{'init': ['k-medoids++'],'n_clusters':list(range(3,11)),'max_iter':list(range(100,400,20))}",
+    "k_as_input": true
+  },
+  "meanshift": {
+    "default_method": false,
+    "ml_library": "sk_learn",
+    "class_path": "sklearn.cluster.MeanShift",
+    "parameters": "{'quantile':0.2, 'n_samples':500, 'random_state':42}",
+    "k_as_input": false
+  },
+  "faiss": {
+    "default_method": false,
+    "ml_library": "faiss",
+    "class_path": "faiss.Kmeans",
+    "parameters": "{'nredo': 10,'n_clusters':list(range(3,11)),'niter':300}",
+    "k_as_input": true
+  }, 
+  "hdbscan": {
+    "default_method": true,
+    "ml_library": "hdbscan",
+    "class_path": "hdbscan.HDBSCAN",
+    "parameters": "{'min_samples':[11], 'min_cluster_size':[3]}",
+    "k_as_input": false
+  }
+  
+}
