@@ -1,0 +1,222 @@
+# version
+airflowHome: /opt/airflow
+defaultAirflowRepository: apache/airflow
+defaultAirflowTag: "2.5.3"
+airflowVersion: "2.5.3"
+
+# Image
+images:
+  airflow:
+    repository: repo_name
+    tag: "dags"
+    digest: ~
+    pullPolicy: Always
+
+# # add the ssh key for git-sync
+# extraSecrets:
+#   airflow-ssh-secret:
+#     data: |
+#       gitSshKey: 'LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUJsd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFZRUEzL3NBWkpmNG4ram5BQ0xwNVNhcHh0eWZZL1Nta2VBcmFUam1BM2w4ZDRQdnBJbEN3STRHCmh1Nkg5YnNaTUsvOXRBZm1xUEZiVVg5QVdWZk9hSUQ0Q0VwWThBeDBMVUREUkExTEdwdHhoeklxUndiQ3lXemVGZld1TkEKK3dYcGVXM2xDZy9hWU1aT21iTmlvYVZVdmUra1RBZzJXdU5rSWpFakJvMXRKSVhqblFoUWNUVm5JcGtrcDRENnVNdU95QwpCZmtra09ab29XSlRtcWNyeDZ0RWFpSkNJeVUrK1RGN2E1NEQwcjV0U2NidGkxVmRPSnEzYVVkRW0zRjFhNHBGeDhJQm1ICi91ViswTEVWMHpxQTQwVWNvNG1VYWdGajVkdTFqbzhWZlErS3FDWEswbkY2V1RJeEhjWGorbTUxWmJtMVRpMnhnS0szMm8KQmlKRkpESGoyaFpKNUFKbDNsNVVZOWFVb3BWU1BkMzd5NWRKUWxYbTRnZFh0TkxWa0M5V2RhSmRCMlI1ZDQ5VTFwR0JpaAo0aThEL0R4WW81alo4R0Jqa3VuTmxGRGRRR3UyWkZzUUlVdGpyQXFPcXUwZDNMcXBDMjJXRGdkRjZwZFpOKy9TcU5DKzBBCjd2c1lTcXN5MGt1NDdzdHRtWnVhSHNtQ051MVNkQ3VBaWZWUWhtWnBBQUFGb0VGQ1g3UkJRbCswQUFBQUIzTnphQzF5YzIKRUFBQUdCQU4vN0FHU1grSi9vNXdBaTZlVW1xY2JjbjJQMHBwSGdLMms0NWdONWZIZUQ3NlNKUXNDT0JvYnVoL1c3R1RDdgovYlFINXFqeFcxRi9RRmxYem1pQStBaEtXUEFNZEMxQXcwUU5TeHFiY1ljeUtrY0d3c2xzM2hYMXJqUVBzRjZYbHQ1UW9QCjJtREdUcG16WXFHbFZMM3ZwRXdJTmxyalpDSXhJd2FOYlNTRjQ1MElVSEUxWnlLWkpLZUErcmpManNnZ1g1SkpEbWFLRmkKVTVxbks4ZXJSR29pUWlNbFB2a3hlMnVlQTlLK2JVbkc3WXRWWFRpYXQybEhSSnR4ZFd1S1JjZkNBWmgvN2xmdEN4RmRNNgpnT05GSEtPSmxHb0JZK1hidFk2UEZYMFBpcWdseXRKeGVsa3lNUjNGNC9wdWRXVzV0VTR0c1lDaXQ5cUFZaVJTUXg0OW9XClNlUUNaZDVlVkdQV2xLS1ZVajNkKzh1WFNVSlY1dUlIVjdUUzFaQXZWbldpWFFka2VYZVBWTmFSZ1lvZUl2QS93OFdLT1kKMmZCZ1k1THB6WlJRM1VCcnRtUmJFQ0ZMWTZ3S2pxcnRIZHk2cVF0dGxnNEhSZXFYV1RmdjBxalF2dEFPNzdHRXFyTXRKTAp1TzdMYlptYm1oN0pnamJ0VW5RcmdJbjFVSVptYVFBQUFBTUJBQUVBQUFHQUJwK1RpV1g5RWkxKzkwQVJEcGV3R1pOWW0wCm9XeXVXSUl4cHRvdGlxMTVYdE5qNWczUFRXT0pOQkxnRVVZNTR3c0d3elkvZVBMYi9IbFZ6Rlc4M0VoK282Nnc1VE9TdGIKR3Q0UnhIMm9ROGsxK3RlMlZ1S0RScjczSWM3ODlpOGhaUDJaWlNiTjR3WU5jdktYeU1Idm5CTUFabUpSWG9WaUtCMktYQgovbngvR0p1d1ZVaXcvaEx0Ukk3SjIwRVp2YzFIUmpvbTFOMXNmamxRVXdoRDBLVHVFb2Q0V1ljU0lIZGswNzY3VjU0ZDZpCkU2YTRsUDN1UW95NitLWElSUi9YbGowRDJYNWwyTUF4alBXR3VHOGZyNlU4dC81dlc4ZVlzc2JNcVV4dVRGNEp0cGtRVi8KU2xRRkVxK0JpVWVaOVZEdVhoOGFjdlpwNnJoNmdWbEt5T2Nnc1FSMFY3clhicTQvMEtkdDNhMTRBTWgybkpKdjJTUHJkNQpNQlAzS0ZmZjAxRXhNdC90bW1hMFh2T2FQQjJGY25pbkw4a2x5OVdzMzhaRWs2L2VsY1BiOUZMa29ObGxBdzdTN1orS2ZsCnNWR0dCTWVKU1paNGlqamRoaDkwelNJb2xUWWdPMWdIeEpkYjVrRldNaWsvanZGYUtIbVM3eFRmYkJBS3ZqUFBESkFBQUEKd1FEVThKMkJOZFZvcXNjN2tjTHJEMDl2WHdBYXg2ZlcyMkNoYmJoZzdXSXF4ZXlRb0ozc1k1TlZVcHU2S3V4d3FlZmwvUwp1Y1J2eHA0V3dYYjJuMTNvYUx1M2FEekpVY3U0bjNkeWZsdklNR3M2YWRlN1hlVXZBRzVZWk1VbmR3S3l3UTlWZmhDdTNQCkV5TVRRS0JHMkFBUTBmclR3cTgrRlRPUlJxcWlZRlg1NTVzMUo3QzN1SDh0M0JkMS9FRXFkYzAwTUZjd3NVN25Cell0MFAKWFdyTDdwWlJqbElIWDNtL2oxNjdxTFFxSURuenhBYzJ3YldGQ1A3bGlzTG1ZREYxb0FBQURCQVBzbFUyOTd0NUhoUnpYMQpRTkJNRmYxZzRmT1NveG0wYjltemFaQnNsS0dSTkVXdEQyNVUrbnBmbnIyWEhjM2VlRTNNamZKTFpSSEN4WDVyVE02Qi9sCkJqVGl0dzQ4Z1hDYmJiN2tVMnJtdG5ZaDIrU1VnOW16R20rUU1PQmJlbTVISWR6bUNzSWltZS96N05WNGMyT3VQUzZBVjgKRy9TSWFVOU8vZ1B5K01NdklnQVRHQ1ZLYVZINFlhNGdGSEZROG9BY2NXVk0wc0hPdFR0YUd5WUlpQnZYTlRsRGltTTU0cgppRFUzbzVYMVlHN3RpZ2RzMzluRDAybTV4ZlNQN1hFd0FBQU1FQTVFOUMxUGl0UGo4K0JsT2wrQUtRbjFISEI1Q3NIYk5ZCkNWZGZJbTBCbGFyYzdyMm9DZUN2UUl6UjczSk5HZ1dyQUFBcHBNRGhvREY4Z250ZEo3TXU1MG1IYnVRVEFJbEswZm1JaGcKTkV6SWlQdGY3Mzh0Mi9HaGJ3RHVBZjJzWStWdDRNcVRhUGlJeGVXMFV5UFE5VUdtbi9XNTVySTl1YXJIWG1YYWwvbDdxWQpGNjN1OTRFQUl3YXFlcGpyZjBDUjUvVlpKc3NqbTVKenhHZGlUQkNvU3NZRlkvQW5vd3ViWkFvejBTUGtvODl4bXdRb3hkCndZNXVZOGMybW9UOUFUQUFBQUptZGhkWEpoZG1KaGEyRnNaVUJuWVhWeVlYWnpMVTFoWTBKdmIyc3RVSEp2TG14dlkyRnMKQVFJREJBPT0KLS0tLS1FTkQgT1BFTlNTSCBQUklWQVRFIEtFWS0tLS0tCg=='
+
+# # Git sync
+# dags:
+#   gitSync:
+#     enabled: true
+#     repo: git@bitbucket.org:insideinsight/mtp-data-engineering.git
+#     branch: 'develop/dev'
+#     subPath: '/ingestion/dags'
+#     rev: HEAD
+#     depth: 1
+#     maxFailures: 0
+#     sshKeySecret: airflow-ssh-secret
+#     wait: 60
+#     containerName: git-sync
+#     uid: 65533
+
+env:
+  - name: "SQLALCHEMY_SILENCE_UBER_WARNING"
+    value: "1"
+
+webserver:
+  resources:
+    limits:
+      cpu: "100m"
+      ephemeral-storage: 1Gi
+      memory: 7Gi
+    requests:
+      cpu: "100m"
+      ephemeral-storage: 1Gi
+      memory: 7Gi
+
+  service:
+    type: LoadBalancer
+
+  serviceAccount:
+    create: false
+    name: "sa"
+
+  defaultUser:
+    enabled: true
+    role: Admin
+    username: airflow
+    email: airflow@example.com
+    firstName: airflow
+    lastName: user
+    password: airflow
+
+scheduler:
+  replicas: 1
+
+  resources:
+    limits:
+      cpu: "500m"
+      memory: 4Gi
+    requests:
+      cpu: "500m"
+      memory: 4Gi
+
+  serviceAccount:
+    create: false
+    name: "sa"
+
+  logGroomerSidecar:
+    enabled: false
+
+workers:
+  env:
+    - name: CELERY_ACKS_LATE
+      value: "true"
+    - name: CELERY_TASK_TRACK_STARTED
+      value: "true"
+
+  containerLifecycleHooks:
+    preStop:
+        exec:
+          command: ["airflow", "celery", "stop"]
+
+  nodeSelector:
+    cloud.google.com/compute-class: Scale-Out
+
+  resources:
+    limits:
+      cpu: "1"
+      memory: 4Gi
+    requests:
+      cpu: "1"
+      memory: 4Gi
+
+  serviceAccount:
+    create: false
+    name: "sa"
+
+  persistence:
+    enabled: false
+
+  keda:
+    enabled: true
+    pollingInterval: 60
+    cooldownPeriod: 780
+    minReplicaCount: 0
+    maxReplicaCount: 7
+
+  terminationGracePeriodSeconds: 300
+
+triggerer:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: 2Gi
+    limits:
+      cpu: "250m"
+      memory: 2Gi
+
+  logGroomerSidecar:
+    enabled: false
+
+redis:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: 1Gi
+    limits:
+      cpu: "250m"
+      memory: 1Gi
+  # # Create ServiceAccount
+  # serviceAccount:
+  #   create: false
+  #   name: {{ .Release.Name }}
+
+statsd:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: 1Gi
+    limits:
+      cpu: "250m"
+      memory: 1Gi
+  # # Create ServiceAccount
+  # serviceAccount:
+  #   create: false
+  #   name: {{ .Release.Name }}
+
+# postgresql:
+
+#   # Create ServiceAccount
+#   serviceAccount:
+#     create: false
+#     name: {{ .Release.Name }}
+
+# flower:
+
+#   # Create ServiceAccount
+#   serviceAccount:
+#     create: false
+#     name: {{ .Release.Name }}
+
+webserverSecretKey: c0f1390b0bdea0347899f8ab02a9b873
+
+extraConfigMaps:
+  "{{ .Release.Name }}-airflow-variables":
+    labels:
+      config_name_label: airflow-variables
+    data: |
+      DEPLOY_ENV: "k8s"
+      TENANT_MODULE_ENV: "{{ .Release.Name }}"
+      read_from_db_flag: "True"
+
+extraEnvFrom: |
+  - configMapRef:
+      name: '{{ .Release.Name }}-airflow-variables'
+
+config:
+  core:
+    parallelism: "32"
+    max_active_runs_per_dag: "1"
+    max_active_tasks_per_dag: "32"
+    default_task_retry_delay: "10"
+    default_task_retries: "1"
+    dagbag_import_timeout: "300"
+    dag_file_processor_timeout: "300"
+  scheduler:
+    catch_by_default: "False"
+    dag_dir_list_interval: "300"
+    scheduler_heartbeat_sec: "2"
+    parsing_processes: "2"
+    job_heartbeat_sec: "10"
+
+  webserver:
+    dag_default_view: "graph"
+    instance_name: "{{ .Release.Name }}"
+  celery:
+    worker_concurrency: 4
+  logging:
+    remote_logging: "True"
+    remote_base_log_folder: "gs://{{ .Release.Name }}/airflow_logs"
+    remote_log_conn_id: "google_cloud_default"
+  api:
+    auth_backends: "airflow.api.auth.backend.basic_auth"
+# # PgBouncer settings
+# pgbouncer:
+#   # Enable PgBouncer
+#   enabled: true
+

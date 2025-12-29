@@ -1,0 +1,1586 @@
+image: python:3.8
+definitions:
+  services:
+    docker:
+      memory: 4096
+  caches:
+    sonar: ~/.sonar/cache  # Caching SonarCloud artifacts will speed up your build
+  steps:
+    - step: &security-scan
+        name: Security Scan
+        size: 2x
+        script:
+          # Run a security scan for sensitive data.
+          # See more security tools at https://bitbucket.org/product/features/pipelines/integrations?&category=security
+          - pipe: atlassian/git-secrets-scan:0.4.3
+
+    - step: &check-quality-gate-sonarcloud
+        name: Check the Quality Gate on SonarCloud
+        size: 2x
+        clone:
+          depth: full              # SonarCloud scanner needs the full history to assign issues properly
+        script:
+          - pipe: sonarsource/sonarcloud-quality-gate:0.1.6
+            variables:
+              EXTRA_ARGS: -Dsonar.exclusions='backend/dataIngestion/airflow/dags/**,backend/ada/sourcing/dags/**,**/*.java'
+
+    - step: &scan-sonarcloud
+        name: Build, test and analyze on SonarCloud
+        size: 2x
+        clone:
+          depth: full              # Number of commits considered for issues assignment. It should to changes to "full" to analyse the full history to assign issues properly
+        script:
+          - pipe: sonarsource/sonarcloud-scan:2.0.0
+            variables:
+              DEBUG: 'true'
+              EXTRA_ARGS: -Dsonar.exclusions='backend/dataIngestion/airflow/dags/**,backend/ada/sourcing/dags/**,**/*.java'
+           
+# Workflow Configuration
+
+pipelines:
+  custom:
+    scan:
+      - step: *security-scan
+      - step: *scan-sonarcloud
+      - step: *check-quality-gate-sonarcloud
+    client_deployment:
+      - variables:
+        - name: CLIENT
+          default: biglots
+          allowed-values: # Please add values in alphabetic order only
+            - arhaus
+            # - balsambrands  # Commented due to code freeze
+            - biglots
+            - bjs
+            # - briscoes  # Commented due to code freeze
+            # - carters  # Commented due to code freeze
+            - cb
+            - ck
+            - dg
+            - joann
+            - mns
+            - mns_mena
+            - partycity_new
+            - pg
+            - pm
+            # - rl_eu  # Commented due to code freeze
+            # - rl_eu_is  # Commented due to code freeze
+            # - rl_na  # Commented due to code freeze
+            - saks
+            # - signet  # Commented due to code freeze
+            - sm
+            - spanx
+            # - tb  # Commented due to code freeze
+            - tommy
+            - toryburch
+            - tsc
+            # - pacsun  # Commented due to code freeze
+            - vb
+            - vs
+            - vs_intl
+        - name: PIPELINE
+          default: sourcing
+          allowed-values:
+            - ingestion
+            - sourcing
+        - name: REBUILD
+          default: false
+          allowed-values:
+            - true
+            - false
+      - step:
+          name: Deploy + Rebuild docker
+          runs-on:
+            - self.hosted
+            - linux.shell
+          script:
+            - ./deploy.sh $CLIENT $PIPELINE $REBUILD
+    
+    build_deploy_pipeline_gke:
+      - variables:
+        - name: CLIENT
+          default: arhaus
+          allowed-values:
+            - arhaus
+            # - balsambrands  # Commented due to code freeze
+            - biglots
+            # - briscoes  # Commented due to code freeze
+            - cb
+            # - carters  # Commented due to code freeze
+            - ck
+            - dg
+            - joann
+            - pm
+            - pg
+            # - rl_eu  # Commented due to code freeze
+            # - rl_eu_is  # Commented due to code freeze
+            # - rl_na  # Commented due to code freeze
+            - saks
+            # - signet  # Commented due to code freeze
+            - sm
+            - spanx
+            # - tb  # Commented due to code freeze
+            - tsc
+            - tommy
+            - toryburch
+            - vb
+            - vs
+            - vs_intl
+
+        - name: PIPELINE
+          default: sourcing
+          allowed-values:
+            - ingestion
+            - sourcing
+      - step:
+          name: build deploy
+          runs-on:
+            - self.hosted
+            - linux.shell
+          script:
+            - ./build_deploy_gke.sh $CLIENT $PIPELINE
+
+
+    deploy_pipeline_gke:
+      - variables:
+        - name: CLIENT
+          default: arhaus
+          allowed-values:
+            - arhaus
+            # - balsambrands  # Commented due to code freeze
+            - biglots
+            # - briscoes  # Commented due to code freeze
+            - cb
+            # - carters  # Commented due to code freeze
+            - ck
+            - dg
+            - joann
+            - pg
+            - pm
+            # - rl_eu  # Commented due to code freeze
+            # - rl_eu_is  # Commented due to code freeze
+            # - rl_na  # Commented due to code freeze
+            - saks
+            # - signet  # Commented due to code freeze
+            - sm
+            - spanx
+            # - tb  # Commented due to code freeze
+            - tsc
+            - tommy
+            - toryburch
+            - vb
+            - vs
+            - vs_intl
+
+        - name: PIPELINE
+          default: sourcing
+          allowed-values:
+            - ingestion
+            - sourcing
+      - step:
+          name: deploy
+          runs-on:
+            - self.hosted
+            - linux.shell
+          script:
+            - ./deploy_gke.sh $CLIENT $PIPELINE
+
+    rebuild_deploy_data_ingestion:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vb ingestion true
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh signet ingestion true
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tommy ingestion true
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh biglots ingestion true      
+          # - step:  # Commented due to code freeze
+          #     name: SSH to balsambrands VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh balsam ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_na ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu_is ingestion true
+          - step:
+              name: SSH to dollar general VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh dg ingestion true
+          - step:
+              name: SSH to Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs ingestion true
+          - step:
+              name: SSH to tsc VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc ingestion true       
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh carters ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to tommy bahama VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh tb ingestion true
+          - step:
+              name: SSH to cracker barrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb ingestion true
+          - step:
+              name: SSH to peter millar VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pm ingestion true
+          - step:
+              name: SSH to patagonia VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pg ingestion true      
+          - step:
+              name: SSH to spanx VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh spanx ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to briscoes VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh briscoes ingestion true
+          - step:
+              name: SSH to toryburch VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh toryburch ingestion true
+          - step:
+              name: SSH to joann VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh joann ingestion true
+          - step:
+              name: SSH to steve madden VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh sm ingestion true
+          - step:
+              name: SSH to victorias secret international VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs_intl ingestion true
+          - step:
+              name: SSH to MarksandSpencer VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns ingestion true
+          - step:
+              name: SSH to MarksandSpencer MENA VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns_mena ingestion true
+          - step:
+              name: SSH to arhaus VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh arhaus ingestion true
+          - step:
+              name: SSH to bjs VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh bjs ingestion true
+          - step:
+              name: SSH to tsc VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc ingestion true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to pacsun VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh pacsun ingestion true
+    rebuild_deploy_sourcing:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vb sourcing true
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc sourcing true      
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh signet sourcing true
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tommy sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh carters sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_na sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to balsambrands VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh balsam sourcing true      
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh biglots sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu_is sourcing true
+          - step:
+              name: SSH to dollar general VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh dg sourcing true
+          - step:
+              name: SSH to Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to tommy bahama VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh tb sourcing true
+          - step:
+              name: SSH to cracker barrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb sourcing true
+          - step:
+              name: SSH to peter millar VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pm sourcing true
+          - step:
+              name: SSH to patagonia VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pg sourcing true      
+          - step:
+              name: SSH to spanx VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh spanx sourcing true
+          # - step:  # Commented due to code freeze
+          #     name: SSH to briscoes VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh briscoes sourcing true
+          - step:
+              name: SSH to toryburch VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh toryburch sourcing true
+          - step:
+              name: SSH to joann VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh joann sourcing true
+          - step:
+              name: SSH to steve madden VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh sm sourcing true
+          - step:
+              name: SSH to victorias secret international VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs_intl sourcing true
+          - step:
+              name: SSH to MarksandSpencer VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns sourcing true
+          - step:
+              name: SSH to MarksandSpencer MENA VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns_mena sourcing true
+          - step:
+              name: SSH to arhaus VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh arhaus sourcing true
+          - step:
+              name: SSH to bjs VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh bjs sourcing true
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc sourcing true   
+          # - step:  # Commented due to code freeze
+          #     name: SSH to pacsun VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh pacsun sourcing true          
+
+    deploy_data_ingestion:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vb ingestion
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc ingestion      
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh signet ingestion
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tommy ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to balsambrands VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh balsam ingestion      
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh biglots ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_na ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu_is ingestion
+          - step:
+              name: SSH to dollar general VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh dg ingestion
+          - step:
+              name: SSH to Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh carters ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to tommy bahama VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh tb ingestion
+          - step:
+              name: SSH to cracker barrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb ingestion
+          - step:
+              name: SSH to peter millar VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pm ingestion
+          - step:
+              name: SSH to patagonia VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pg ingestion      
+          - step:
+              name: SSH to spanx VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh spanx ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to briscoes VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh briscoes ingestion
+          - step:
+              name: SSH to toryburch VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh toryburch ingestion
+          - step:
+              name: SSH to joann VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh joann ingestion
+          - step:
+              name: SSH to steve madden VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh sm ingestion
+          - step:
+              name: SSH to victorias secret international VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs_intl ingestion
+          - step:
+              name: SSH to MarksandSpencer VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns ingestion
+          - step:
+              name: SSH to MarksandSpencer MENA VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns_mena ingestion
+          - step:
+              name: SSH to arhaus VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh arhaus ingestion
+          - step:
+              name: SSH to bjs VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh bjs ingestion
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to pacsun VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh pacsun ingestion      
+    deploy_sourcing:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vb sourcing
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc sourcing      
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh signet sourcing
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tommy sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh carters sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_na sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to balsambrands VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh balsam sourcing      
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh biglots sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh rl_eu_is sourcing
+          - step:
+              name: SSH to dollar general VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh dg sourcing
+          - step:
+              name: SSH to Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to tommy bahama VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh tb sourcing
+          - step:
+              name: SSH to cracker barrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh cb sourcing
+          - step:
+              name: SSH to peter millar VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pm sourcing
+          - step:
+              name: SSH to patagonia VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh pg sourcing      
+          - step:
+              name: SSH to spanx VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh spanx sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to briscoes VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh briscoes sourcing
+          - step:
+              name: SSH to toryburch VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh toryburch sourcing
+          - step:
+              name: SSH to joann VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh joann sourcing
+          - step:
+              name: SSH to steve madden VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh sm sourcing
+          - step:
+              name: SSH to victorias secret international VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh vs_intl sourcing
+          - step:
+              name: SSH to MarksandSpencer VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns sourcing
+          - step:
+              name: SSH to MarksandSpencer MENA VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh mns_mena sourcing
+          - step:
+              name: SSH to arhaus VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh arhaus sourcing
+          - step:
+              name: SSH to bjs VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh bjs sourcing
+          - step:
+              name: SSH to tractorsupply VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./deploy.sh tsc sourcing    
+          # - step:  # Commented due to code freeze
+          #     name: SSH to pacsun VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./deploy.sh pacsun sourcing         
+
+    migrate_sourcing_logs:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh vb sourcing
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh cb sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh signet sourcing
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh tommy sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh carters sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_na sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_eu sourcing
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh biglots sourcing
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_eu_is sourcing
+          - step:
+              name: SSH to dg VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh dg sourcing
+          - step:
+              name: SSH to  Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh vs sourcing
+
+    migrate_ingestion_logs:
+      - parallel:
+          - step:
+              name: SSH to vera bradley VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - hostname -i
+                - ./migrate_logs_to_gcs.sh vb ingestion
+          - step:
+              name: SSH to crackerbarrel VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh cb ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to signet VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh signet ingestion
+          - step:
+              name: SSH to tommy VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh tommy ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to carters VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh carters ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_na VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_na ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_eu ingestion
+          - step:
+              name: SSH to partycity_new VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh partycity_new ingestion
+          - step:
+              name: SSH to biglots VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh biglots ingestion
+          # - step:  # Commented due to code freeze
+          #     name: SSH to rl_eu_is VM and execute commands
+          #     runs-on:
+          #       - self.hosted
+          #       - linux.shell
+          #     script:
+          #       - ./migrate_logs_to_gcs.sh rl_eu_is ingestion
+          - step:
+              name: SSH to dg VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh dg ingestion
+          - step:
+              name: SSH to  Victorias secret VM and execute commands
+              runs-on:
+                - self.hosted
+                - linux.shell
+              script:
+                - ./migrate_logs_to_gcs.sh vs ingestion
+
+    deploy_dataflow_jars:
+      - variables:
+        - name: JAR
+          default: bigquery-to-db
+          allowed-values:
+            - all
+            - bigquery-to-db
+            - bigquery-to-db-copy-multi
+            - db-to-bigquery
+            - gcs-to-bigquery
+            - gcs-to-snowflake
+            - sftp-to-bigquery
+            - snowflake-to-bigquery
+            - snowflake-to-db
+            - snowflake-to-db-copy-multi
+            - db-to-snowflake
+      - step:
+          name: Build JARs for dataflow pipelines and upload to respective client locations
+          runs-on:
+            - self.hosted
+            - linux.shell
+          script:
+            - ./deploy_jars.sh $JAR
+    
+  pull-requests:
+    "{feature/*,bugfix/*,hotfix/*,*}":
+      - parallel:
+        - step: *scan-sonarcloud
+        - step: *security-scan
+      - step: *check-quality-gate-sonarcloud
+    develop/*:
+      - parallel:
+        - step: *scan-sonarcloud
+        - step: *security-scan
+      - step: *check-quality-gate-sonarcloud
+    main:
+      - parallel:
+        - step: *scan-sonarcloud
+        - step: *security-scan
+      - step: *check-quality-gate-sonarcloud
+
+  branches:
+    "{develop/dev,develop/test,develop/uat,main}":
+      - parallel:
+        - step: *scan-sonarcloud
+        - step: *security-scan
+      - step: *check-quality-gate-sonarcloud
+
+  schedules:
+    # Schedule for Arhaus
+    - cron: "40 11 * * *"  # 5:10 PM IST → 11:40 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: arhaus
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "40 11 * * *"  # 5:10 PM IST → 11:40 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: arhaus
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for Balsambrands - Commented due to code freeze
+    # - cron: "30 0 * * *"  # 6:00 AM IST → 12:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: balsambrands
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 0 * * *"  # 6:00 AM IST → 12:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: balsambrands
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for Briscoes - Commented due to code freeze
+    # - cron: "40 17 * * *"  # 11:10 PM IST → 5:40 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: briscoes
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "40 17 * * *"  # 11:10 PM IST → 5:40 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: briscoes
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for Carters - Commented due to code freeze
+    # - cron: "0 7 * * *"  # 12:30 PM IST → 7:00 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: carters
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "0 7 * * *"  # 12:30 PM IST → 7:00 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: carters
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for CB
+    - cron: "40 7 * * *"  # 1:10 PM IST → 7:40 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: cb
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "40 7 * * *"  # 1:10 PM IST → 7:40 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: cb
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for DG
+    - cron: "0 8 * * *"  # 1:30 PM IST → 8:00 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: dg
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "0 8 * * *"  # 1:30 PM IST → 8:00 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: dg
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for PG
+    - cron: "30 18 * * *"  # 12:00 AM IST → 6:30 PM UTC (previous day)
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: pg
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 18 * * *"  # 12:00 AM IST → 6:30 PM UTC (previous day)
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: pg
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for PM
+    - cron: "30 5 * * *"  # 11:00 AM IST → 5:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: pm
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 5 * * *"  # 11:00 AM IST → 5:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: pm
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for RL_EU - Commented due to code freeze
+    # - cron: "30 4 * * *"  # 10:00 AM IST → 4:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_eu
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 4 * * *"  # 10:00 AM IST → 4:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_eu
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for RL_EU_IS - Commented due to code freeze
+    # - cron: "30 14 * * *"  # 8:00 PM IST → 2:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_eu_is
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 14 * * *"  # 8:00 PM IST → 2:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_eu_is
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for RL_NA - Commented due to code freeze
+    # - cron: "30 14 * * *"  # 8:00 PM IST → 2:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_na
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 14 * * *"  # 8:00 PM IST → 2:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: rl_na
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for Signet - Commented due to code freeze
+    # - cron: "30 7 * * *"  # 1:00 PM IST → 7:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: signet
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 7 * * *"  # 1:00 PM IST → 7:30 AM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: signet
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for SM
+    - cron: "30 8 * * *"  # 2:00 PM IST → 8:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: sm
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 8 * * *"  # 2:00 PM IST → 8:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: sm
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for Spanx
+    - cron: "30 7 * * *"  # 1:00 PM IST → 7:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: spanx
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 7 * * *"  # 1:00 PM IST → 7:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: spanx
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for TB - Commented due to code freeze
+    # - cron: "30 13 * * *"  # 7:00 PM IST → 1:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: tb
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "30 13 * * *"  # 7:00 PM IST → 1:30 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: tb
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for Toryburch
+    - cron: "30 18 * * *"  # 12:00 AM IST → 6:30 PM UTC (previous day)
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: toryburch
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 18 * * *"  # 12:00 AM IST → 6:30 PM UTC (previous day)
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: toryburch
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for TSC
+    - cron: "30 4 * * *"  # 10:00 AM IST → 4:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: tsc
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "30 4 * * *"  # 10:00 AM IST → 4:30 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: tsc
+        PIPELINE: ingestion
+        REBUILD: true
+
+    # Schedule for Pacsun - Commented due to code freeze
+    # - cron: "0 15 * * *"  # 8:30 PM IST → 3:00 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: pacsun
+    #     PIPELINE: sourcing
+    #     REBUILD: true
+
+    # - cron: "0 15 * * *"  # 8:30 PM IST → 3:00 PM UTC
+    #   branches:
+    #     - develop/dev
+    #   pipeline: client_deployment
+    #   variables:
+    #     CLIENT: pacsun
+    #     PIPELINE: ingestion
+    #     REBUILD: true
+
+    # Schedule for VS
+    - cron: "45 6 * * *"  # 12:15 PM IST → 6:45 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: vs
+        PIPELINE: sourcing
+        REBUILD: true
+
+    - cron: "45 6 * * *"  # 12:15 PM IST → 6:45 AM UTC
+      branches:
+        - develop/dev
+      pipeline: client_deployment
+      variables:
+        CLIENT: vs
+        PIPELINE: ingestion
+        REBUILD: true

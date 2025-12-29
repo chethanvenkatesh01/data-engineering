@@ -1,0 +1,1 @@
+UNIQUE_VIEWS = ['Material_Regional_Book_Price', 'Purchase_Order', 'Fiscal_Calendar', 'Store_Master_Extnd', 'Product_Master', 'Store_Master', 'Currency_Exchange', 'Regional_Product', 'Customer_Master', 'Markdown', 'Regional_Product_Extnd', 'Store_Inventory_Daily', 'Pricing_By_Country', 'Transaction_Data', 'Wholesale_Sales', 'Pricing_By_Currency']

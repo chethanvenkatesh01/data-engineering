@@ -1,0 +1,15 @@
+# apache-beam[gcp]==2.36.0
+apache-airflow==2.6.3
+apache-airflow-providers-apache-beam==3.1.0
+apache-airflow-providers-google==8.11.0
+pymssql==2.2.7
+PyMySQL==1.0.3
+ssh2-python==1.0.0
+gcsfs==2022.8.2
+pretty_html_table==0.9.16
+apache-airflow-providers-snowflake
+psycopg2-binary
+python-dotenv==0.20.0
+gcsfs==2022.8.2
+python-crontab==2.5.1
+google-cloud-compute==1.19.2
