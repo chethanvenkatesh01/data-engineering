@@ -1,0 +1,6 @@
+#google-cloud-bigquery==2.31.0
+apache-beam[gcp]==2.35.0
+beam-nuggets==0.18.1
+apitools
+google-apitools
+ 
