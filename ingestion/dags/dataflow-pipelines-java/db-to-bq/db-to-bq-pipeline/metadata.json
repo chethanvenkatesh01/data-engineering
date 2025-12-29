@@ -1,0 +1,90 @@
+{
+    "name": "DB to BQ pipeline",
+    "description": "An Apache Beam batch pipeline that reads data from sql table / query and writes the results to a BigQuery",
+    "parameters": [
+      {
+        "name": "secretName",
+        "label": "secretName",
+        "helpText": "Should be of pattern <tenant>_<env>_data_ingestion",
+        "regexes": []
+      },
+      {
+        "name": "dbType",
+        "label": "dbType",
+        "helpText": "dbType",
+        "regexes": []
+      },
+      {
+        "name": "pullType",
+        "label": "pullType",
+        "helpText": "pullType",
+        "regexes": []
+      },
+      {
+        "name": "dbTable",
+        "label": "dbTable",
+        "helpText": "dbTable",
+        "regexes": []
+      },
+      {
+        "name": "bqDataset",
+        "label": "bqDataset",
+        "helpText": "bqDataset",
+        "regexes": []
+      },
+      {
+        "name": "usePublicIps",
+        "label": "usePublicIps",
+        "helpText": "usePublicIps",
+        "regexes": []
+      },
+      {
+        "name": "workerMachineType",
+        "label": "workerMachineType",
+        "helpText": "workerMachineType",
+        "regexes": []
+      },
+      {
+        "name": "autoscalingAlgorithm",
+        "label": "autoscalingAlgorithm",
+        "helpText": "autoscalingAlgorithm",
+        "regexes": []
+      },
+      {
+        "name": "bqTable",
+        "label": "bqTable",
+        "helpText": "bqTable",
+        "regexes": []
+      },
+      {
+        "name": "maxNumWorkers",
+        "label": "maxNumWorkers",
+        "helpText": "maxNumWorkers",
+        "regexes": []
+      },
+      {
+        "name": "stagingLocation",
+        "label": "stagingLocation",
+        "helpText": "stagingLocation",
+        "regexes": []
+      },
+      {
+        "name": "replaceTable",
+        "label": "replaceTable",
+        "helpText": "replaceTable",
+        "regexes": []
+      },
+      {
+        "name": "queries",
+        "label": "queries",
+        "helpText": "queries",
+        "regexes": []
+      },
+      {
+        "name": "queryPartitioningThreshold",
+        "label": "queryPartitioningThreshold",
+        "helpText": "queryPartitioningThreshold",
+        "regexes": []
+      }
+    ]
+  }

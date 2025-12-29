@@ -1,0 +1,83 @@
+{
+    "defaultEnvironment": {},
+    "image": "us-central1-docker.pkg.dev/carters-070424/carters-data-pipelines/db-to-bq-pipeline:latest",
+    "metadata": {
+        "description": "An Apache Beam batch pipeline that reads data from sql table / query and writes the results to a BigQuery",
+        "name": "DB to BQ pipeline",
+        "parameters": [
+            {
+                "helpText": "Should be of pattern <tenant>_<env>_data_ingestion",
+                "label": "secretName",
+                "name": "secretName"
+            },
+            {
+                "helpText": "dbType",
+                "label": "dbType",
+                "name": "dbType"
+            },
+            {
+                "helpText": "pullType",
+                "label": "pullType",
+                "name": "pullType"
+            },
+            {
+                "helpText": "dbTable",
+                "label": "dbTable",
+                "name": "dbTable"
+            },
+            {
+                "helpText": "bqDataset",
+                "label": "bqDataset",
+                "name": "bqDataset"
+            },
+            {
+                "helpText": "usePublicIps",
+                "label": "usePublicIps",
+                "name": "usePublicIps"
+            },
+            {
+                "helpText": "workerMachineType",
+                "label": "workerMachineType",
+                "name": "workerMachineType"
+            },
+            {
+                "helpText": "autoscalingAlgorithm",
+                "label": "autoscalingAlgorithm",
+                "name": "autoscalingAlgorithm"
+            },
+            {
+                "helpText": "bqTable",
+                "label": "bqTable",
+                "name": "bqTable"
+            },
+            {
+                "helpText": "maxNumWorkers",
+                "label": "maxNumWorkers",
+                "name": "maxNumWorkers"
+            },
+            {
+                "helpText": "stagingLocation",
+                "label": "stagingLocation",
+                "name": "stagingLocation"
+            },
+            {
+                "helpText": "replaceTable",
+                "label": "replaceTable",
+                "name": "replaceTable"
+            },
+            {
+                "helpText": "queries",
+                "label": "queries",
+                "name": "queries"
+            },
+            {
+                "helpText": "queryPartitioningThreshold",
+                "label": "queryPartitioningThreshold",
+                "name": "queryPartitioningThreshold"
+            }
+        ]
+    },
+    "sdkInfo": {
+        "language": "JAVA"
+    }
+}

@@ -1,0 +1,20 @@
+{
+  "postgresql": {
+    "BOOLEAN" : "BOOLEAN",
+    "BOOL" : "BOOLEAN",
+    "BYTES" : "BYTEA",
+    "STRING"  : "TEXT",
+    "FLOAT64"   : "FLOAT4",
+    "INT64" : "INT4",
+    "NUMERIC" : "NUMERIC",
+    "BIGNUMERIC" : "NUMERIC",
+    "DATE" : "DATE",
+    "DATETIME" : "TIMESTAMP WITHOUT TIME ZONE",
+    "TIMESTAMP" : "TIMESTAMP WITH TIME ZONE",
+    "TIME" : "TIME WITHOUT TIME ZONE",
+    "INTEGER" :  "INT4",
+    "FLOAT" : "FLOAT4"
+  },
+  "mysql": {},
+  "oracle": {}
+}
